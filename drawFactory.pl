@@ -22,13 +22,14 @@ draw_board1() :-
 d():-
     write('   1   2   3   4     5   6   7   8'), nl,
 				% d( ['A','B','C','D','E','F','G', 'H', 'I'], [1,2,3,4,5,6,7,8,9]).
-    draw_board(['A','B','C','D','E','F','G', 'H'], [1,2,3,4,5,6,7,8]),
+    draw_board([1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8]),
     write('  ----------------------------------'), nl.
 
 start_game():-
 	retractall(pos(_, _, _)),
-	init_rows(['A','B','C','D','E','F','G', 'H'], [1,2,3,4,5,6,7,8]),
-	d(),!.
+	init_rows([1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8]),
+	d(),
+	t(1,1),!.
 
 init_rows([], _):- !.
 init_rows([R|Rs], C) :-
@@ -43,10 +44,10 @@ init_column(R,[C|Cs]) :-
 
 draw_board([], _) :- !.
 
-draw_board(['E'|Rs], C) :-
+draw_board([5|Rs], C) :-
 	write('  **********************************'), nl,
-	write('E'),
-	draw_row('E', C, 1),
+	write(5),
+	draw_row(5, C, 1),
 	draw_board(Rs, C),!.
 draw_board([R|Rs], C) :-
 	write('  ----------------------------------'), nl,
@@ -75,7 +76,24 @@ draw_row(R, [C| Cs], Index) :-
 	pos(R,C,Val),
 	write(Val),
 	Index1 is Index + 1,
-	draw_row(R, Cs, Index1)).
+	 draw_row(R, Cs, Index1)).
+
+
+switch(I, J) :-
+    T1 is 5-J,
+    T2 is 5-I,
+    pos(I,J,V1),
+    pos(T1, I, V2),
+    pos(T2, T1, V3),
+    pos(J, T2, V4),
+    retract(pos(I,J,_)),
+    retract(pos(T1,I,_)),
+    retract(pos(T2,T1,_)),
+    retract(pos(J,T2,_)),
+    assert(pos(I,J,V2)),
+    assert(pos(T1,I,V3)),
+    assert(pos(T2,T1,V4)),
+    assert(pos(J,T2,V1)),!.
 	
 	
     
