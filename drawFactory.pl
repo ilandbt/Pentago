@@ -27,8 +27,8 @@ d():-
 
 start_game():-
 	retractall(pos(_, _, _)),
-	init_rows([1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8]),
-	d(),!.
+	init_rows([1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8]).
+	%d(),!.
 
 init_rows([], _):- !.
 init_rows([R|Rs], C) :-
@@ -77,6 +77,15 @@ draw_row(R, [C| Cs], Index) :-
 	Index1 is Index + 1,
 	 draw_row(R, Cs, Index1)).
 
+play(X, Y, V) :-
+	pos(X,Y,'  '),!,
+	retract(pos(X,Y,_)),
+	atom_concat(V, ' ', Temp),
+	assert(pos(X,Y,Temp)),
+	d(),!
+	;
+	write('position taken!').
+	
 
 rotate(Q) :-
 	Q = 'TL',!,rotateI(1,1,0,0)
@@ -131,7 +140,8 @@ test1():-
     assert(pos(1,1,'X ')),
     assert(pos(1,6,'X ')),
     assert(pos(6,1,'X ')),
-    assert(pos(6,6,'X ')).
+    assert(pos(6,6,'X ')),
+    d(),!.
 	
 	
 	
