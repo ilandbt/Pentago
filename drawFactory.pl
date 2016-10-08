@@ -77,34 +77,62 @@ draw_row(R, [C| Cs], Index) :-
 	Index1 is Index + 1,
 	 draw_row(R, Cs, Index1)).
 
-rotateI(3, _):-!.
-rotateI(I, J):-
-	rotateJ(I, J),
+
+rotate(Q) :-
+	Q = 'TL',!,rotateI(1,1,0,0)
+	;
+	Q = 'TR',!,rotateI(1,1,0,4)
+	;
+	Q = 'BL',!,rotateI(1,1,4,0)
+	;
+	Q = 'BR',rotateI(1,1,4,4).
+
+rotateI(3, _, _, _):-!.
+rotateI(I, J, Si, Sj):-
+	rotateJ(I, J, Si, Sj),
 	I1 is I + 1,
-	rotateI(I1, J).
+	rotateI(I1, J, Si, Sj).
 
-rotateJ(_,3):-!.
-rotateJ(I,J):-
-	switch(I,J),
+rotateJ(_,3,_,_):-!.
+rotateJ(I,J, Si, Sj):-
+	switch(I,J,Si,Sj),
 	J1 is J + 1,
-	rotateJ(I, J1).
+	rotateJ(I, J1, Si, Sj).
 
 
-switch(I, J) :-
-    T1 is 5-J,
-    T2 is 5-I,
-    pos(I,J,V1),
-    pos(T1, I, V2),
-    pos(T2, T1, V3),
-    pos(J, T2, V4),
-    retract(pos(I,J,_)),
-    retract(pos(T1,I,_)),
-    retract(pos(T2,T1,_)),
-    retract(pos(J,T2,_)),
-    assert(pos(I,J,V2)),
-    assert(pos(T1,I,V3)),
-    assert(pos(T2,T1,V4)),
-    assert(pos(J,T2,V1)),!.
+switch(I, J, Si, Sj) :-
+	T1i is 5-J + Si,
+	T1j is 5-J + Sj,
+	T2i is 5-I + Si,
+	T2j is 5-I + Sj,
+	J1i is J + Si,
+	J1j is J + Sj,
+	I1i is I + Si,
+	I1j is I + Sj,
+    pos(I1i,J1j,V1),
+    pos(T1i, I1j, V2),
+    pos(T2i, T1j, V3),
+    pos(J1i, T2j, V4),
+    retract(pos(I1i,J1j,_)),
+    retract(pos(T1i,I1j,_)),
+    retract(pos(T2i,T1j,_)),
+    retract(pos(J1i,T2j,_)),
+    assert(pos(I1i,J1j,V2)),
+    assert(pos(T1i,I1j,V3)),
+    assert(pos(T2i,T1j,V4)),
+    assert(pos(J1i,T2j,V1)),!.
+
+test1():-
+	start_game(),
+    retract(pos(1,1,_)),
+    retract(pos(1,6,_)),
+    retract(pos(6,1,_)),
+    retract(pos(6,6,_)),
+    assert(pos(1,1,'X ')),
+    assert(pos(1,6,'X ')),
+    assert(pos(6,1,'X ')),
+    assert(pos(6,6,'X ')).
+	
 	
 	
     
