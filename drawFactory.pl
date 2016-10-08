@@ -28,8 +28,7 @@ d():-
 start_game():-
 	retractall(pos(_, _, _)),
 	init_rows([1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8]),
-	d(),
-	t(1,1),!.
+	d(),!.
 
 init_rows([], _):- !.
 init_rows([R|Rs], C) :-
@@ -77,6 +76,18 @@ draw_row(R, [C| Cs], Index) :-
 	write(Val),
 	Index1 is Index + 1,
 	 draw_row(R, Cs, Index1)).
+
+rotateI(3, _):-!.
+rotateI(I, J):-
+	rotateJ(I, J),
+	I1 is I + 1,
+	rotateI(I1, J).
+
+rotateJ(_,3):-!.
+rotateJ(I,J):-
+	switch(I,J),
+	J1 is J + 1,
+	rotateJ(I, J1).
 
 
 switch(I, J) :-
