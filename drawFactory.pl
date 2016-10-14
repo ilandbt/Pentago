@@ -77,39 +77,41 @@ draw_row(R, [C| Cs], Index) :-
 	Index1 is Index + 1,
 	 draw_row(R, Cs, Index1)).
 
+%play the value V in position (X,Y)
 play(X, Y, V) :-
 	pos(X,Y,'  '),!,
 	retract(pos(X,Y,_)),
 	atom_concat(V, ' ', Temp),
 	assert(pos(X,Y,Temp)),
-	d(),!
-	;
-	write('position taken!').
+	d(),!.
+	%;
+	%write('position taken!').
 	
 
-rotate(Q) :-
-	Q = 'TL',!,rotateI(1,1,0,0)
+%rotate quarter Q to direction D 
+rotate(Q, D) :-
+	Q = 'TL',!,rotateI(1,1,0,0, D)
 	;
-	Q = 'TR',!,rotateI(1,1,0,4)
+	Q = 'TR',!,rotateI(1,1,0,4,D)
 	;
-	Q = 'BL',!,rotateI(1,1,4,0)
+	Q = 'BL',!,rotateI(1,1,4,0, D)
 	;
-	Q = 'BR',rotateI(1,1,4,4).
+	Q = 'BR',rotateI(1,1,4,4,D).
 
-rotateI(3, _, _, _):-!.
-rotateI(I, J, Si, Sj):-
-	rotateJ(I, J, Si, Sj),
+rotateI(3, _, _, _,_):-!.
+rotateI(I, J, Si, Sj,D):-
+	rotateJ(I, J, Si, Sj,D),
 	I1 is I + 1,
-	rotateI(I1, J, Si, Sj).
+	rotateI(I1, J, Si, Sj,D).
 
-rotateJ(_,3,_,_):-!.
-rotateJ(I,J, Si, Sj):-
-	switch(I,J,Si,Sj),
+rotateJ(_,3,_,_,_):-!.
+rotateJ(I,J, Si, Sj,D):-
+	switch(I,J,Si,Sj,D),
 	J1 is J + 1,
-	rotateJ(I, J1, Si, Sj).
+	rotateJ(I, J1, Si, Sj,D).
 
 
-switch(I, J, Si, Sj) :-
+switch(I, J, Si, Sj, D) :-
 	T1i is 5-J + Si,
 	T1j is 5-J + Sj,
 	T2i is 5-I + Si,
@@ -126,10 +128,17 @@ switch(I, J, Si, Sj) :-
     retract(pos(T1i,I1j,_)),
     retract(pos(T2i,T1j,_)),
     retract(pos(J1i,T2j,_)),
+    (D = 'CW',!,
     assert(pos(I1i,J1j,V2)),
     assert(pos(T1i,I1j,V3)),
     assert(pos(T2i,T1j,V4)),
-    assert(pos(J1i,T2j,V1)),!.
+    assert(pos(J1i,T2j,V1))
+    ;
+    assert(pos(I1i,J1j,V4)),
+    assert(pos(T1i,I1j,V1)),
+    assert(pos(T2i,T1j,V2)),
+    assert(pos(J1i,T2j,V3))),!.
+
 
 test1():-
 	start_game(),
