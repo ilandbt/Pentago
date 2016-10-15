@@ -137,8 +137,42 @@ switch(I, J, Si, Sj, D) :-
     assert(pos(I1i,J1j,V4)),
     assert(pos(T1i,I1j,V1)),
     assert(pos(T2i,T1j,V2)),
-    assert(pos(J1i,T2j,V3))),!.
+     assert(pos(J1i,T2j,V3))),!.
 
+%check if the Val makes a win verticaly
+didWinVertical(_,_,_,4):-!.
+didWinVertical(X,Y,Val, Pos):-
+	X1 is X-3+Pos,
+	X2 is X-2+Pos,
+	X3 is X-1+Pos,
+	X4 is X+Pos,
+	(pos(X1,Y,Val),!,
+	pos(X2,Y,Val),
+	pos(X3,Y,Val),
+	pos(X4,Y,Val)
+	;
+	Pos2 is Pos + 1,
+	didWinVertical(X,Y,Val,Pos2)),!.
+
+
+%check if the Val makes a win horizontly
+didWinHorizontal(_,_,_,4):-!.
+didWinHorizontal(X,Y,Val, Pos):-
+	Y1 is Y-3+Pos,
+	Y2 is Y-2+Pos,
+	Y3 is Y-1+Pos,
+	Y4 is Y+Pos,
+	(pos(X,Y1,Val),!,
+	pos(X,Y2,Val),
+	pos(X,Y3,Val),
+	pos(X,Y4,Val)
+	;
+	Pos2 is Pos + 1,
+	didWinVertical(X,Y,Val,Pos2)),!.
+
+	
+didWinHorizontal().
+didWinDiagonal().
 
 test1():-
 	start_game(),
