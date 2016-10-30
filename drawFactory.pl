@@ -1,24 +1,3 @@
-%example
-draw_board1() :-
-    write('    1   2   3   4     5   6   7  8'), nl,
-    write('   ----------------------------------'), nl,
-    write('A |   |   |   |   |*|   |   |   |   |'), nl,
-    write('   ----------------------------------'), nl,
-    write('B |   |   |   |   |*|   |   |   |   |'), nl,
-    write('   ----------------------------------'), nl,
-    write('C |   |   |   |   |*|   |   |   |   |'), nl,
-    write('   ----------------------------------'), nl,
-    write('D |   |   |   |   |*|   |   |   |   |'), nl,
-    write('   **********************************'), nl,
-    write('E |   |   |   |   |*|   |   |   |   |'), nl,
-    write('   ----------------------------------'), nl,
-    write('F |   |   |   |   |*|   |   |   |   |'), nl,
-    write('   ----------------------------------'), nl,
-    write('G |   |   |   |   |*|   | 0 |   |   |'), nl,
-    write('   ----------------------------------'), nl,
-    write('H |   |   |   |   |*|   | X |   |   |'), nl,
-    write('   ----------------------------------'), nl.
-
 d():-
     write('   1   2   3   4     5   6   7   8'), nl,
 				% d( ['A','B','C','D','E','F','G', 'H', 'I'], [1,2,3,4,5,6,7,8,9]).
@@ -140,7 +119,7 @@ switch(I, J, Si, Sj, D) :-
      assert(pos(J1i,T2j,V3))),!.
 
 %check if the Val makes a win verticaly
-didWinVertical(_,_,_,4):-!.
+didWinVertical(_,_,_,4):-!,fail.
 didWinVertical(X,Y,Val, Pos):-
 	X1 is X-3+Pos,
 	X2 is X-2+Pos,
@@ -156,7 +135,7 @@ didWinVertical(X,Y,Val, Pos):-
 
 
 %check if the Val makes a win horizontly
-didWinHorizontal(_,_,_,4):-!.
+didWinHorizontal(_,_,_,4):-!,fail.
 didWinHorizontal(X,Y,Val, Pos):-
 	Y1 is Y-3+Pos,
 	Y2 is Y-2+Pos,
@@ -168,11 +147,49 @@ didWinHorizontal(X,Y,Val, Pos):-
 	pos(X,Y4,Val)
 	;
 	Pos2 is Pos + 1,
-	didWinVertical(X,Y,Val,Pos2)),!.
+	didWinHorizontal(X,Y,Val,Pos2)),!.
 
-	
-didWinHorizontal().
-didWinDiagonal().
+
+
+
+didWinDiagonalLeftToRight(_,_,_,4):-!,fail.
+didWinDiagonalLeftToRight(X,Y,Val, Pos):-
+	Y1 is Y-3+Pos,
+	Y2 is Y-2+Pos,
+	Y3 is Y-1+Pos,
+	Y4 is Y+Pos,
+	X1 is X-3+Pos,
+	X2 is X-2+Pos,
+	X3 is X-1+Pos,
+	X4 is X+Pos,
+	(pos(X1,Y1,Val),!,
+	pos(X2,Y2,Val),
+	pos(X3,Y3,Val),
+	pos(X4,Y4,Val)
+	;
+	Pos2 is Pos + 1,
+	didWinDiagonalLeftToRight(X,Y,Val,Pos2)),!.
+
+didWinDiagonalRightToLeft(_,_,_,4):-!,fail.
+didWinDiagonalRightToLeft(X,Y,Val, Pos):-
+	Y1 is Y+3+Pos,
+	Y2 is Y+2+Pos,
+	Y3 is Y+1+Pos,
+	Y4 is Y+Pos,
+	X1 is X-3+Pos,
+	X2 is X-2+Pos,
+	X3 is X-1+Pos,
+	X4 is X+Pos,
+	(pos(X1,Y1,Val),!,
+	pos(X2,Y2,Val),
+	pos(X3,Y3,Val),
+	pos(X4,Y4,Val)
+	;
+	Pos2 is Pos + 1,
+	didWinDiagonalRightToLeft(X,Y,Val,Pos2)),!.
+
+
+
 
 test1():-
 	start_game(),
@@ -185,7 +202,32 @@ test1():-
     assert(pos(6,1,'X ')),
     assert(pos(6,6,'X ')),
     d(),!.
-	
+
+test2():-
+	start_game(),
+    retract(pos(1,1,_)),
+    retract(pos(2,2,_)),
+    retract(pos(3,3,_)),
+    retract(pos(4,4,_)),
+    assert(pos(1,1,'X ')),
+    assert(pos(2,2,'X ')),
+    assert(pos(3,3,'X ')),
+    assert(pos(4,4,'X ')),
+    d(),!.
+
+
+
+test3():-
+	start_game(),
+    retract(pos(1,1,_)),
+    retract(pos(1,2,_)),
+    retract(pos(1,3,_)),
+    retract(pos(1,4,_)),
+    assert(pos(1,1,'X ')),
+    assert(pos(1,2,'X ')),
+    assert(pos(1,3,'X ')),
+    assert(pos(1,4,'X ')),
+    d(),!.
 	
 	
     
