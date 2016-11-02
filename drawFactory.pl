@@ -1,5 +1,8 @@
-module(drawFactory, []).
-include(gameController).
+d():-
+    write('   1   2   3   4     5   6   7   8'), nl,
+				% d( ['A','B','C','D','E','F','G', 'H', 'I'], [1,2,3,4,5,6,7,8,9]).
+    draw_board([1,2,3,4,5,6,7,8], [1,2,3,4,5,6,7,8]),
+    write('  ----------------------------------'), nl.
 
 start_game():-
 	retractall(pos(_, _, _)),
@@ -236,6 +239,12 @@ betterof( Pos, Val, _, Val1, Pos, Val) :-         % Pos better then Pos1
 
 betterof( _, _, Pos1, Val1, Pos1, Val1).             % Otherwise Pos1 better
 
+
+%foreach empty position get all the rotation options
+moves(Res):-
+	A=['CW','CCW'],
+	B=['TL','TR','BL','BR'],
+	setof([X,Y,I,J],(pos(X,Y,'  '), member(I, A), member(J, B)), Res).
 
 
 
