@@ -11,17 +11,17 @@ startUser():-
 startComputer():-
 	initialize_game_board(B),
 	play(computer, o, B).
-/*
+
 %check if any player won the game
 play(_, S, B) :-
 	%check if there is a winner
-	didWin(S,B),
+	didWin(B, S),
 	%print the board
 	drawBoard(B),
-	S = x,!, write('You WON!!!!! ')
-	;
-	write('You lose :( '),!.
-*/
+	write(S),write('winner!!!').
+	%S = x,!, write('You WON!!!!! ')
+	%;
+	%write('You lose :( '),!.
 
 % Users move
 play(user, S, B):-
@@ -38,9 +38,6 @@ play(computer, Sign, Board) :-
 	 toggleSign(Sign, NextSign),
      play(user, NextSign, Board).%should be NewBoard
 
-%TODO
-%check if S run on board B
-didWin(S,B).
 
 %proccessing the moves
 %procces move at location [X,Y] and rotate Quater Q in R Direction
@@ -94,7 +91,7 @@ rotateBoard(B, tr, cw, RotatedBoard) :-!,
 rotateBoard(B, br, cw, RotatedBoard) :-!,
 	B = b(X1,X2,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,X13,X14,X15,X16,X17,X18,X19,X20,X21,X22,X23,X24,X25,X26,X27,X28,X29,X30,X31,X32,X33,X34,X35,X36,X37,X38,X39,X40,X41,X42,X43,X44,X45,X46,X47,X48,X49,X50,X51,X52,X53,X54,X55,X56,X57,X58,X59,X60,X61,X62,X63,X64),
 	RotatedBoard = b(X1,X2,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,X13,X14,X15,X16,X17,X18,X19,X20,X21,X22,X23,X24,X25,X26,X27,X28,X29,X30,X31,X32,X33,X34,X35,X36,X40,X48,X56,X64,X41,X42,X43,X44,X39,X47,X55,X63,X49,X50,X51,X52,X38,X46,X54,X62,X57,X58,X59,X60,X37,X45,X53,X61).
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 rotateBoard(B, tl, ccw, RotatedBoard) :-!,
 	B = b(X1,X2,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,X13,X14,X15,X16,X17,X18,X19,X20,X21,X22,X23,X24,X25,X26,X27,X28,X29,X30,X31,X32,X33,X34,X35,X36,X37,X38,X39,X40,X41,X42,X43,X44,X45,X46,X47,X48,X49,X50,X51,X52,X53,X54,X55,X56,X57,X58,X59,X60,X61,X62,X63,X64),
 	RotatedBoard = b(X25,X17,X9,X1,X5,X6,X7,X8,X26,X18,X10,X2,X13,X14,X15,X16,X27,X19,X11,X3,X21,X22,X23,X24,X28,X20,X12,X4,X29,X30,X31,X32,X33,X34,X35,X36,X37,X38,X39,X40,X41,X42,X43,X44,X45,X46,X47,X48,X49,X50,X51,X52,X53,X54,X55,X56,X57,X58,X59,X60,X61,X62,X63,X64).
@@ -123,6 +120,76 @@ getSign(B, X, Y, S) :-
 replace([_|T], 0, X, [X|T]).
 replace([H|T], I, X, [H|R]):- I > -1, NI is I-1, replace(T, NI, X, R), !.
 replace(L, _, _, L).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+fourLists(L,S) :-
+    L = [[e,S,S,S,S],[S,e,S,S,S],[S,S,e,S,S],[S,S,S,e,S],[S,S,S,S,e]].
+threeLists(L,S):-
+    L=[[e,e,S,S,S],[e,S,S,S,e],[e,e,S,S,S],[S,e,e,S,S],[S,S,e,e,S],[S,e,S,e,S]].
+twoLists(L,S):-
+    L=[[e,e,e,S,S],[e,e,S,S,e],[e,S,S,e,e],[S,S,e,e,e], [S,e,S,e,e],[S,e,e,S,e],[S,e,e,e,S], [e,S,e,S,e],[e,S,e,e,S],[e,e,S,e,S]].
+oneLists(L,S):-
+    L=[[e,e,e,e,S],[e,e,e,S,e],[e,e,S,e,e],[e,S,e,e,e],[S,e,e,e,e]].
+
+
+
+listSum([], 0).
+listSum([H|T], Sum) :-
+   sum_list(T, Rest),
+   Sum is H + Rest.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%check if S run on board B
+didWin(B, S) :-
+	resultChecker(B, [S,S,S,S,S], _).
+
+
+resultChecker(B, Compare, Length) :- 
+    findall(T, (gapv(Output, B),member(T, Output) ,T=Compare), Result),
+    length(Result, Length),
+    Length > 0.
+
+gapv(Output, Board):-
+    findall(Vals, (groupsOfWinningFive(Groups),member(Group, Groups), gpv(Group, Vals, Board)), Output).
+gpv(Input, Output, Board):-
+    findall(S, (member(Index, Input),arg(Index, Board, S)),Output).
+
+groupsOfWinningFive(L) :-
+	L = [[1,2,3,4,5], [2,3,4,5,6], [3,4,5,6,7], [4,5,6,7,8], 
+	[9,10,11,12,13], [10,11,12,13,14], [11,12,13,14,15], [12,13,14,15,16],
+  	[17,18,19,20,21], [18,19,20,21,22], [19,20,21,22,23], [20,21,22,23,24],
+  	[25,26,27,28,29], [26,27,28,29,30], [27,28,29,30,31], [28,29,30,31,32],
+  	[33,34,35,36,37], [34,35,36,37,38] ,[35,36,37,38,39] ,[36,37,38,39,40],
+  	[41,42,43,44,45],[42,43,44,45,46],[43,44,45,46,47],[44,45,46,47,48],
+  	[49,50,51,52,53],[50,51,52,53,54],[51,52,53,54,55],[52,53,54,55,56],
+  	[57,58,59,60,61],[58,59,60,61,62],[59,60,61,62,63],[60,61,62,63,64],
+
+  	[1,9,17,25,33],[9,17,25,33,41],[17,25,33,41,49],[25,33,41,49,57],
+  	[2,10,18,26,34],[10,18,26,34,42],[18,26,34,42,50],[26,34,42,50,58],
+  	[3,11,19,27,35],[11,19,27,35,43],[19,27,35,43,51],[27,35,43,51,59],
+  	[4,12,20,28,36],[12,20,28,36,44],[20,28,36,44,52],[28,36,44,52,60],
+  	[5,13,21,29,37],[13,21,29,37,45],[21,29,37,45,53],[29,37,45,53,61],
+  	[6,14,22,30,38],[14,22,30,38,46],[22,30,38,46,54],[30,38,46,54,62],
+  	[7,15,23,31,39],[15,23,31,39,47],[23,31,39,47,55],[31,39,47,55,63],
+  	[8,16,24,32,40],[16,24,32,40,48],[24,32,40,48,56],[32,40,48,56,64] ,
+
+  	[25,34,43,52,61],
+  	[17,26,35,44,53],[26,35,44,53,62],
+  	[9,18,27,36,45],[18,27,36,45,54],[27,36,45,54,63],
+  	[1,10,19,28,37],[10,19,28,37,46],[19,28,37,46,55],[28,37,46,55,64],
+  	[2,11,20,29,38],[11,20,29,38,47],[20,29,38,47,56],
+  	[3,12,21,30,39],[12,21,30,39,48],
+  	[4,13,22,31,40],
+
+  	[5,12,19,26,33],
+  	[6,13,20,27,34],[13,20,27,34,41],
+  	[7,14,21,28,35],[14,21,28,35,42],[21,28,35,42,49],
+  	[8,15,22,29,36],[15,22,29,36,43],[22,29,36,43,50],[29,36,43,50,57],
+  	[16,23,30,37,44],[23,30,37,44,51],[30,37,44,51,58],
+  	[24,31,38,45,52],[31,38,45,52,59],
+  	[32,39,46,53,60] ].
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
