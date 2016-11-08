@@ -33,7 +33,7 @@ play(user, S, B):-
 	% proccess the next move
 	proccessMove(S, NextMove, B).
 
-play(computer, Sign, Board) :-
+play(computer, Sign, Board) :- 
      %alphabeta(Sign/Board, -100, 100, Next/NewBoard, _, 2),
 	 toggleSign(Sign, NextSign),
      play(user, NextSign, Board).%should be NewBoard
@@ -49,7 +49,7 @@ proccessMove(S, X-Y-Q-R, B) :-
 	%rotate a quater of the board
 	rotateBoard(NewBoard, Q, R, RotatedBoard),
 	%switch player
-	toggleSign(Sign, NextSign),
+	toggleSign(S, NextSign),
 	play(computer, NextSign , RotatedBoard).
 
 
@@ -63,7 +63,6 @@ proccessMove(S, _, B) :-
 validateMove(B, X, Y) :-
 	getSign(B, X, Y, e).
 
-%TODO
 %add Sign S at location X, Y in to newBoard
 addSign(B, S, X, Y, NewBoard) :-
      Num is ((X -1) * 8) + Y-1,
@@ -121,6 +120,61 @@ replace([_|T], 0, X, [X|T]).
 replace([H|T], I, X, [H|R]):- I > -1, NI is I-1, replace(T, NI, X, R), !.
 replace(L, _, _, L).
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%  -----      alpha beta      -----  %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%get all available moves in Board B
+moves(B, Moves) :-
+	Rotations=[cw,ccw],
+	Locations=[tl,bl,tr,br],
+	setof([Index,I,J],(arg(Index,B,_), member(I, Rotations), member(J, Locations)), Moves),!.
+
+
+alphabeta( Pos, Alpha, Beta, GoodPos, Val) :-
+	moves( Pos, PosList), !,
+	boundedbest( PosList, Alpha, Beta, GoodPos, Val);
+	staticval( Pos, Val). % Static value of Pos
+
+boundedbest( [Pos | PosList], Alpha, Beta, GoodPos, GoodVal) :-
+	alphabeta( Pos, Alpha, Beta, _, Val),
+	goodenough( PosList, Alpha, Beta, Pos, Val, GoodPos, GoodVal).
+
+goodenough( [], _, _, Pos, Val, Pos, Val) :- !. % No other candidate
+
+
+goodenough( _ ,Alpha, Beta, Pos, Val, Pos, Val) :-
+	min_to_move( Pos), Val > Beta, !
+	% Maximizer attained upper bound ;
+	max_to_move( Pos), Val < Alpha, !.
+	% Minimizer attained lower bound
+
+goodenough( PosList, Alpha, Beta, Pos, Val, GoodPos, GoodVal) :-
+	newbounds( Alpha, Beta, Pos, Val, NewAlpha, NewBeta),
+	% Refine bounds
+	boundedbest( PosList, NewAlpha, NewBeta, Pos1, Val1),
+	betterof( Pos, Val, Pos1, Val1, GoodPos, GoodVal).
+
+newbounds( Alpha, Beta, Pos, Val, Val, Beta) :-
+	min_to_move( Pos), Val > Alpha, !.
+	% Maximizer increased lower bound
+
+newbounds( Alpha, Beta, Pos, Val, Alpha, Val) :-
+	max_to_move( Pos), Val < Beta, !.
+	% Minimizer decreased upper bound
+
+newbounds( Alpha, Beta, _, _, Alpha, Beta). % Otherwise bounds unchanged
+
+betterof( Pos, Val, Pos1, Val1, Pos, Val) :-
+	% Pos better than Pos1
+	min_to_move( Pos), Val > Val1, !
+	;
+	max_to_move( Pos), Val < Val1, !.
+
+
+betterof( _, _, Pos1, Val1, Pos1, Val1). % Otherwise Pos1 better
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 fourLists(L,S) :-
@@ -132,11 +186,13 @@ twoLists(L,S):-
 oneLists(L,S):-
     L=[[e,e,e,e,S],[e,e,e,S,e],[e,e,S,e,e],[e,S,e,e,e],[S,e,e,e,e]].
 
-
+check(B,S,Count):-
+    findall(X,(fourLists(Lists, S), member(List, Lists), resultChecker(B,List,X)),Res),
+    listSum(Res,Count).
 
 listSum([], 0).
 listSum([H|T], Sum) :-
-   sum_list(T, Rest),
+   listSum(T, Rest),
    Sum is H + Rest.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -204,7 +260,6 @@ drawPosition(B, X, Y, D) :-
 	getSign(B, X, Y, S),
 	signMap(S, D).
 
-%TODO
 drawBoard(B) :-
 	write('   1   2   3   4     5   6   7   8'), nl,
 	drawBoard(B, 1, 1, 8, 8),
