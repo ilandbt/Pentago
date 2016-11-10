@@ -3,30 +3,42 @@
 initialize_game_board( Board) :-
       Board = b(e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e).
 
+clear :-
+      retractall(max_to_move(_)),
+      retractall(min_to_move(_)),!.
 
 startUser():-
+	clear,
 	initialize_game_board(B),
+     assert(min_to_move(x-_)),assert(max_to_move(o-_)),
 	play(user, x, B).
 
 startComputer():-
+	clear,
 	initialize_game_board(B),
+	assert(min_to_move(o-_)),assert(max_to_move(x-_)),
 	play(computer, o, B).
 
 %check if any player won the game
+
 play(_, S, B) :-
 	%check if there is a winner
 	didWin(B, S),
 	%print the board
 	drawBoard(B),
-	write(S),write('winner!!!').
+	clear,
+	drawWinner(S).
+	%write(S),write('winner!!!').
 	%S = x,!, write('You WON!!!!! ')
 	%;
 	%write('You lose :( '),!.
 
 % Users move
 play(user, S, B):-
-	%print the board
+
 	drawBoard(B),
+	%print the board
+	%drawBoard(B),
 	% get next play
 	write('whats your next move? '),
 	read(NextMove),
@@ -34,9 +46,13 @@ play(user, S, B):-
 	proccessMove(S, NextMove, B).
 
 play(computer, Sign, Board) :- 
-     %alphabeta(Sign/Board, -100, 100, Next/NewBoard, _, 2),
-	 toggleSign(Sign, NextSign),
-     play(user, NextSign, Board).%should be NewBoard
+
+	drawBoard(Board),
+     write(computer),write(' - '),write(Sign),write(' - '),write(Board),nl,
+     alphabeta(Sign-Board, -1000,1000,NextSign-NextBoard,_,1),
+     write(alphabeta),write(' - '),write(NextSign),write(' - '),write(NextBoard),nl,
+	 %toggleSign(Sign, NextSign),
+     play(user, NextSign, NextBoard).%should be NextBoard
 
 
 %proccessing the moves
@@ -50,6 +66,7 @@ proccessMove(S, X-Y-Q-R, B) :-
 	rotateBoard(NewBoard, Q, R, RotatedBoard),
 	%switch player
 	toggleSign(S, NextSign),
+
 	play(computer, NextSign , RotatedBoard).
 
 
@@ -61,14 +78,16 @@ proccessMove(S, _, B) :-
 
 %validate move
 validateMove(B, X, Y) :-
-	getSign(B, X, Y, e).
+	%getSign(B, X, Y, e),
+	Num is ((X -1) * 8) + Y-1+1,
+    arg(Num, B, e).
 
 %add Sign S at location X, Y in to newBoard
 addSign(B, S, X, Y, NewBoard) :-
      Num is ((X -1) * 8) + Y-1,
 	 B =.. [b|BoardList],
 	 replace(BoardList, Num, S, TempList),
-	 NewBoard =.. [b|TempList],write(new),write(NewBoard),nl.
+	 NewBoard =.. [b|TempList].%write(new),write(NewBoard),nl.
 
 
 
@@ -112,7 +131,7 @@ toggleSign(o, x).
 
 %returns the Sign S for a position [X, Y] in Board B
 getSign(B, X, Y, S) :-
-        Num is ((X ) * 8) + Y,
+        Num is ((X -1) * 8) + Y-1,
         arg(Num, B, S).
 
 
@@ -126,54 +145,67 @@ replace(L, _, _, L).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %get all available moves in Board B
-moves(B, Moves) :-
+moves(S-B, Moves) :-
 	Rotations=[cw,ccw],
 	Locations=[tl,bl,tr,br],
-	setof([Index,I,J],(arg(Index,B,_), member(I, Rotations), member(J, Locations)), Moves),!.
+	setof([X,Y,I,J],Index^(arg(Index,B,_), member(I, Rotations), member(J, Locations), X is Index//8+1,Y is mod(Index,8)), AllMoves),
+	findall(Sign-Board, (member([X,Y,R,Q], AllMoves),addSign(B, S, X, Y, NewBoard),rotateBoard(NewBoard,Q,R,Board),toggleSign(S, Sign)), Moves),!.
 
 
-alphabeta( Pos, Alpha, Beta, GoodPos, Val) :-
-	moves( Pos, PosList), !,
-	boundedbest( PosList, Alpha, Beta, GoodPos, Val);
-	staticval( Pos, Val). % Static value of Pos
-
-boundedbest( [Pos | PosList], Alpha, Beta, GoodPos, GoodVal) :-
-	alphabeta( Pos, Alpha, Beta, _, Val),
-	goodenough( PosList, Alpha, Beta, Pos, Val, GoodPos, GoodVal).
-
-goodenough( [], _, _, Pos, Val, Pos, Val) :- !. % No other candidate
+%TODO: implement
+staticval(S-B, Val) :-
 
 
-goodenough( _ ,Alpha, Beta, Pos, Val, Pos, Val) :-
-	min_to_move( Pos), Val > Beta, !
-	% Maximizer attained upper bound ;
-	max_to_move( Pos), Val < Alpha, !.
-	% Minimizer attained lower bound
+	
+	didWin(B,S),!,Val = 1000
+	;
+	toggleSign(S, NextSign),didWin(B, NextSign),!, Val = 1000
+	;
+	toggleSign(S, NextSign),
+	checkFour(B,S,ValFour),
+	checkThree(B,S,ValThree),
+	checkTwo(B,S,ValTwo),
+	%checkOne(B,S,ValOne),
+	checkFour(B,NextSign,ValFourT),
+	checkThree(B,NextSign,ValThreeT),
+	checkTwo(B,NextSign,ValTwoT),
+	Val is ValFour*4 + ValThree*3 + ValTwo*2 - ValFourT - ValThreeT - ValTwoT.
 
-goodenough( PosList, Alpha, Beta, Pos, Val, GoodPos, GoodVal) :-
-	newbounds( Alpha, Beta, Pos, Val, NewAlpha, NewBeta),
-	% Refine bounds
-	boundedbest( PosList, NewAlpha, NewBeta, Pos1, Val1),
-	betterof( Pos, Val, Pos1, Val1, GoodPos, GoodVal).
+alphabeta( Pos, Alpha, Beta, GoodPos, Val, Depth) :-
+          	Depth > 0, moves( Pos, PosList), !,
+           boundedbest( PosList, Alpha, Beta, GoodPos, Val, Depth);
+           staticval( Pos, Val).        % Static value of Pos
+
+boundedbest( [Pos|PosList], Alpha, Beta, GoodPos, GoodVal, Depth) :-
+             Depth1 is Depth - 1,
+             alphabeta( Pos, Alpha, Beta, _, Val, Depth1),
+             goodenough( PosList, Alpha, Beta, Pos, Val, GoodPos, GoodVal, Depth).
+
+goodenough( [], _, _, Pos, Val, Pos, Val, _) :- !.     % No other candidate
+
+goodenough( _, Alpha, Beta, Pos, Val, Pos, Val, _) :-
+            min_to_move( Pos), Val > Beta, !;       % Maximizer attained upper bound
+            max_to_move( Pos), Val < Alpha, !.      % Minimizer attained lower bound
+
+goodenough( PosList, Alpha, Beta, Pos, Val, GoodPos, GoodVal, Depth) :-
+            newbounds( Alpha, Beta, Pos, Val, NewAlpha, NewBeta),        % Refine bounds
+            boundedbest( PosList, NewAlpha, NewBeta, Pos1, Val1, Depth),
+            betterof( Pos, Val, Pos1, Val1, GoodPos, GoodVal).
 
 newbounds( Alpha, Beta, Pos, Val, Val, Beta) :-
-	min_to_move( Pos), Val > Alpha, !.
-	% Maximizer increased lower bound
+           min_to_move( Pos), Val > Alpha, !.        % Maximizer increased lower bound
 
 newbounds( Alpha, Beta, Pos, Val, Alpha, Val) :-
-	max_to_move( Pos), Val < Beta, !.
-	% Minimizer decreased upper bound
+           max_to_move( Pos), Val < Beta, !.         % Minimizer decreased upper bound
 
-newbounds( Alpha, Beta, _, _, Alpha, Beta). % Otherwise bounds unchanged
+newbounds( Alpha, Beta, _, _, Alpha, Beta).          % Otherwise bounds unchanged
 
-betterof( Pos, Val, Pos1, Val1, Pos, Val) :-
-	% Pos better than Pos1
-	min_to_move( Pos), Val > Val1, !
-	;
-	max_to_move( Pos), Val < Val1, !.
+betterof( Pos, Val, _, Val1, Pos, Val) :-         % Pos better then Pos1
+          min_to_move( Pos), Val > Val1, !;
+          max_to_move( Pos), Val < Val1, !.
 
+betterof( _, _, Pos1, Val1, Pos1, Val1).             % Otherwise Pos1 better
 
-betterof( _, _, Pos1, Val1, Pos1, Val1). % Otherwise Pos1 better
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -186,8 +218,20 @@ twoLists(L,S):-
 oneLists(L,S):-
     L=[[e,e,e,e,S],[e,e,e,S,e],[e,e,S,e,e],[e,S,e,e,e],[S,e,e,e,e]].
 
-check(B,S,Count):-
+checkFour(B,S,Count):-
     findall(X,(fourLists(Lists, S), member(List, Lists), resultChecker(B,List,X)),Res),
+    listSum(Res,Count).
+
+checkThree(B,S,Count):-
+    findall(X,(threeLists(Lists, S), member(List, Lists), resultChecker(B,List,X)),Res),
+    listSum(Res,Count).
+
+checkTwo(B,S,Count):-
+    findall(X,(twoLists(Lists, S), member(List, Lists), resultChecker(B,List,X)),Res),
+    listSum(Res,Count).
+
+checkOne(B,S,Count):-
+    findall(X,(oneLists(Lists, S), member(List, Lists), resultChecker(B,List,X)),Res),
     listSum(Res,Count).
 
 listSum([], 0).
@@ -295,14 +339,37 @@ drawRow(B, X, Y, Xend) :-
 	write('| '),
 	%pos(R,C,Val),
 	%write(Val),
-	drawPosition(B, X, Y, D),
+    X1 is X + 1,
+    Y1 is Y + 1,
+	drawPosition(B, X1, Y1, D),
 	write(D),
 	Xnext is X + 1,
     drawRow(B, Xnext,Y,  Xend).
 drawRow(B, X, Y,Xend) :-
     write('| '),
-	drawPosition(B, X, Y, D),
+    X1 is X + 1,
+    Y1 is Y + 1,
+	drawPosition(B, X1, Y1, D),
 	write(D),
 	Xnext is X + 1,
     drawRow(B, Xnext, Y,Xend).
 
+drawWinner(x) :-
+	drawWin,!.
+
+drawWinner(o) :-
+	drawLose,!.
+
+ drawWin:-
+ 	write(' __  __     ______     __  __        __     __     __     __   __   '),nl,
+ 	write('/\\ \\_\\ \\   /\\  __ \\   /\\ \\/\\ \\      /\\ \\  _ \\ \\   /\\ \\   /\\ "-.\\ \\   '),nl,
+ 	write('\\ \\____ \\  \\ \\ \\/\\ \\  \\ \\ \\_\\ \\     \\ \\ \\/ ".\\ \\  \\ \\ \\  \\ \\ \\-.  \\   '),nl,
+ 	write(' \\/\\_____\\  \\ \\_____\\  \\ \\_____\\     \\ \\__/".~\\_\\  \\ \\_\\  \\ \\_\\\\"\\_\\   '),nl,
+ 	write('  \\/_____/   \\/_____/   \\/_____/      \\/_/   \\/_/   \\/_/   \\/_/ \\/_/  '),nl.
+
+drawLose :-
+	write(' __  __     ______     __  __        __         ______     ______     ______   '),nl,
+	write('/\\ \\_\\ \\   /\\  __ \\   /\\ \\/\\ \\      /\\ \\       /\\  __ \\   /\\  ___\\   /\\  ___\\  '),nl,
+	write('\\ \\____ \\  \\ \\ \\/\\ \\  \\ \\ \\_\\ \\     \\ \\ \\____  \\ \\ \\/\\ \\  \\ \\___  \\  \\ \\  __\\  '),nl,
+	write(' \\/\\_____\\  \\ \\_____\\  \\ \\_____\\     \\ \\_____\\  \\ \\_____\\  \\/\\_____\\  \\ \\_____\\'),nl,
+	write('  \\/_____/   \\/_____/   \\/_____/      \\/_____/   \\/_____/   \\/_____/   \\/_____/'),nl.
