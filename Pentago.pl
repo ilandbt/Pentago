@@ -1,3 +1,62 @@
+% Programmer: Gil Osher
+% File Name: Pentago.pl
+% Description: Pentago is a two-player abstract strategy game
+%				The game is played on a 8x8 board divided into four 4x4 sub-boards (or quadrants). 
+%				Taking turns, the two players place a marble of their shape (x or o) onto an unoccupied space on the board,
+%				and then rotate one of the sub-boards by 90 degrees either clockwise or anti-clockwise.
+%				A player WINS by getting five of their shapes in a vertical, horizontal or diagonal row. 
+%
+%
+% Synopsys: 
+%			startUser. - For the user to play the first move
+%           startComputer. - For the computer to play the first move
+%
+%           each turn you need to enter your move in the next format
+%			Column-Row-SubBoard-RotationDirection
+%
+%			column -> [1-8]
+%			row -> [1-8]
+%			subBoard -> [tl,tr,bl,br] - (explanation: tl -> top left, tr -> top right, bl - bottom left, br - bottom right)
+%			rotationDirection - [cw,ccw] - (explanation: cw -> clockwise, ccw -> counter clockwise)
+%	
+%           [row, column] is the position of the marble on the board (explanation: row -> from top to bottom, column -> from left to right)
+%			
+%			EXAMPLE: play: 3-6-br-cw
+%			
+%
+%				   1   2   3   4     5   6   7   8				   	 1   2   3   4     5   6   7   8
+%				  ----------------------------------				----------------------------------
+%				1|   |   |   |   |*|   |   |   |   |			  1|   |   |   |   |*|   |   |   |   |
+%				  ----------------------------------				----------------------------------
+%				2|   |   |   |   |*|   |   |   |   |			  2|   |   |   |   |*|   |   |   |   |
+%				  ----------------------------------				----------------------------------
+%				3|   |   |   |   |*|   |   |   |   |			  3|   |   |   |   |*|   |   |   |   |
+%				  ----------------------------------				----------------------------------
+%	 Before ->  4|   |   |   |   |*|   |   |   |   |	After ->  4|   |   |   |   |*|   |   |   |   |
+%				  **********************************				**********************************
+%				5|   |   |   |   |*|   |   |   |   |			  5|   |   |   |   |*|   |   |   |   |
+%				  ----------------------------------				----------------------------------
+%				6|   |   |   |   |*|   |   |   |   |			  6|   |   | X |   |*|   |   |   |   |
+%				  ----------------------------------				----------------------------------
+%				7|   |   |   |   |*|   |   |   |   |			  7|   |   |   |   |*|   |   |   |   |
+%				 ----------------------------------					----------------------------------
+%				8|   |   |   |   |*|   |   |   | O |			  8|   |   |   |   |*| O |   |   |   |
+% 				 ----------------------------------					----------------------------------
+%
+%
+%			In each turn you can call -> stop. <- for aborting the game.	
+%			In each tuen you can call -> help. <- for the manual.	
+%
+%
+  
+
+
+
+
+
+
+
+
 % The initialized board
 % all positions are empty
 initialize_game_board( Board) :-
@@ -15,49 +74,42 @@ startUser():-
 
 startComputer():-
 	clear,
-	initialize_game_board(B),
+	initialize_game_board(Board),
 	assert(min_to_move(o-_)),assert(max_to_move(x-_)),
-	play(computer, o, B).
+	play(computer, o, Board).
 
 %check if any player won the game
 
-play(_, S, B) :-
+play(_, Sign, Board) :-
 	%check if there is a winner
-	didWin(B, S),
-	%print the board
-	drawBoard(B),
-	clear,
-	drawWinner(S).
-	%write(S),write('winner!!!').
-	%S = x,!, write('You WON!!!!! ')
-	%;
-	%write('You lose :( '),!.
+	(didWin(Board, Sign), clear,drawBoard(Board), drawWinner(Sign)
+	;
+	toggleSign(Sign, OtherSign),
+	didWin(Board, OtherSign),clear,drawBoard(Board), drawWinner(OtherSign)).
 
 % Users move
-play(user, S, B):-
+play(user, Sign, Board):-
 
-	drawBoard(B),
-	%print the board
-	%drawBoard(B),
+	drawBoard(Board),
 	% get next play
 	write('whats your next move? '),
 	read(NextMove),
 	% proccess the next move
-	proccessMove(S, NextMove, B).
+	proccessMove(Sign, NextMove, Board).
 
 play(computer, Sign, Board) :- 
-
 	drawBoard(Board),
-     write(computer),write(' - '),write(Sign),write(' - '),write(Board),nl,
-     alphabeta(Sign-Board, -1000,1000,NextSign-NextBoard,_,1),
-     write(alphabeta),write(' - '),write(NextSign),write(' - '),write(NextBoard),nl,
-	 %toggleSign(Sign, NextSign),
-     play(user, NextSign, NextBoard).%should be NextBoard
+    alphabeta(Sign-Board, -1000,1000,NextSign-NextBoard,_,1),
+    play(user, NextSign, NextBoard).
 
 
 %proccessing the moves
 %procces move at location [X,Y] and rotate Quater Q in R Direction
 proccessMove(_, stop, _):-!.
+proccessMove(Sign,help,Board):-
+	help,
+	play(user, Sign, Board).
+
 proccessMove(S, X-Y-Q-R, B) :-
 	%add Sign
 	validateMove(B, X, Y),
@@ -69,6 +121,10 @@ proccessMove(S, X-Y-Q-R, B) :-
 
 	play(computer, NextSign , RotatedBoard).
 
+proccessMove(S, X-Y-_-_, B) :-
+	not(validateMove(B, X, Y)),
+	write('Position taken, please enter new position or type help. for instructions.'),nl,
+	play(user, S, B).
 
 
 %input error from user
@@ -124,7 +180,7 @@ rotateBoard(B, tr, ccw, RotatedBoard) :-!,
 
 rotateBoard(B, br, ccw, RotatedBoard) :-!,
 	B = b(X1,X2,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,X13,X14,X15,X16,X17,X18,X19,X20,X21,X22,X23,X24,X25,X26,X27,X28,X29,X30,X31,X32,X33,X34,X35,X36,X37,X38,X39,X40,X41,X42,X43,X44,X45,X46,X47,X48,X49,X50,X51,X52,X53,X54,X55,X56,X57,X58,X59,X60,X61,X62,X63,X64),
-	RotatedBoard = b(X1,X2,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,X13,X14,X15,X16,X17,X18,X19,X20,X21,X22,X23,X24,X25,X26,X27,X28,X29,X30,X31,X32,X33,X34,X35,X36,X37,X53,X45,X61,X41,X42,X43,X44,X62,X54,X46,X38,X49,X50,X51,X52,X63,X55,X47,X39,X57,X58,X59,X60,X64,X56,X48,X40).
+	RotatedBoard = b(X1,X2,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,X13,X14,X15,X16,X17,X18,X19,X20,X21,X22,X23,X24,X25,X26,X27,X28,X29,X30,X31,X32,X33,X34,X35,X36,X61,X53,X45,X37,X41,X42,X43,X44,X62,X54,X46,X38,X49,X50,X51,X52,X63,X55,X47,X39,X57,X58,X59,X60,X64,X56,X48,X40).
 
 toggleSign(x, o).
 toggleSign(o, x).
@@ -154,9 +210,6 @@ moves(S-B, Moves) :-
 
 %TODO: implement
 staticval(S-B, Val) :-
-
-
-	
 	didWin(B,S),!,Val = 1000
 	;
 	toggleSign(S, NextSign),didWin(B, NextSign),!, Val = 1000
@@ -170,6 +223,7 @@ staticval(S-B, Val) :-
 	checkThree(B,NextSign,ValThreeT),
 	checkTwo(B,NextSign,ValTwoT),
 	Val is ValFour*4 + ValThree*3 + ValTwo*2 - ValFourT - ValThreeT - ValTwoT.
+
 
 alphabeta( Pos, Alpha, Beta, GoodPos, Val, Depth) :-
           	Depth > 0, moves( Pos, PosList), !,
@@ -218,20 +272,20 @@ twoLists(L,S):-
 oneLists(L,S):-
     L=[[e,e,e,e,S],[e,e,e,S,e],[e,e,S,e,e],[e,S,e,e,e],[S,e,e,e,e]].
 
-checkFour(B,S,Count):-
-    findall(X,(fourLists(Lists, S), member(List, Lists), resultChecker(B,List,X)),Res),
+checkFour(Board,S,Count):-
+    findall(X,(fourLists(Lists, S), member(List, Lists), resultChecker(Board,List,X)),Res),
     listSum(Res,Count).
 
-checkThree(B,S,Count):-
-    findall(X,(threeLists(Lists, S), member(List, Lists), resultChecker(B,List,X)),Res),
+checkThree(Board,S,Count):-
+    findall(X,(threeLists(Lists, S), member(List, Lists), resultChecker(Board,List,X)),Res),
     listSum(Res,Count).
 
-checkTwo(B,S,Count):-
-    findall(X,(twoLists(Lists, S), member(List, Lists), resultChecker(B,List,X)),Res),
+checkTwo(Board,S,Count):-
+    findall(X,(twoLists(Lists, S), member(List, Lists), resultChecker(Board,List,X)),Res),
     listSum(Res,Count).
 
-checkOne(B,S,Count):-
-    findall(X,(oneLists(Lists, S), member(List, Lists), resultChecker(B,List,X)),Res),
+checkOne(Board,S,Count):-
+    findall(X,(oneLists(Lists, S), member(List, Lists), resultChecker(Board,List,X)),Res),
     listSum(Res,Count).
 
 listSum([], 0).
@@ -242,18 +296,21 @@ listSum([H|T], Sum) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %check if S run on board B
-didWin(B, S) :-
-	resultChecker(B, [S,S,S,S,S], _).
+didWin(Board, Sign) :-
+	resultChecker(Board, [Sign,Sign,Sign,Sign,Sign], _).
 
 
-resultChecker(B, Compare, Length) :- 
-    findall(T, (gapv(Output, B),member(T, Output) ,T=Compare), Result),
+resultChecker(Board, Compare, Length) :- 
+    findall(T, (getAllPositionsValues(Output, Board),member(T, Output) ,T=Compare), Result),
     length(Result, Length),
     Length > 0.
 
-gapv(Output, Board):-
-    findall(Vals, (groupsOfWinningFive(Groups),member(Group, Groups), gpv(Group, Vals, Board)), Output).
-gpv(Input, Output, Board):-
+%output - list of lists of all the values in board of all winnig options.
+getAllPositionsValues(Output, Board):-
+    findall(Vals, (groupsOfWinningFive(Groups),member(Group, Groups), getPositionsValues(Group, Vals, Board)), Output).
+
+%input - list of positions, output - list of values at position in board
+getPositionsValues(Input, Output, Board):-
     findall(S, (member(Index, Input),arg(Index, Board, S)),Output).
 
 groupsOfWinningFive(L) :-
@@ -300,59 +357,58 @@ signMap(e, '  ').
 signMap(x, 'X ').
 signMap(o, 'O ').
 
-drawPosition(B, X, Y, D) :-
-	getSign(B, X, Y, S),
-	signMap(S, D).
+drawPosition(Board, X, Y, Output) :-
+	getSign(Board, X, Y, Sign),
+	signMap(Sign, Output).
 
-drawBoard(B) :-
+drawBoard(Board) :-
 	write('   1   2   3   4     5   6   7   8'), nl,
-	drawBoard(B, 1, 1, 8, 8),
+	drawBoard(Board, 1, 1, 8, 8),
 	write('  ----------------------------------'), nl, !.
 
 drawBoard(_, _, Y, _, Yend):-
 	Temp is Yend + 1,
 	Temp = Y,!.
-drawBoard(B, X, Y, Xend, Yend) :-
+drawBoard(Board, X, Y, Xend, Yend) :-
     Temp is Yend/2+1,
     Y = Temp,
     write('  **********************************'), nl,
 	write(X),
-    drawRow(B, 0,Y, Xend),
+    drawRow(Board, 0,Y, Xend),
     Xtemp is X + 1,
     Ytemp is Y + 1,
-    drawBoard(B, Xtemp, Ytemp, Xend,Yend).
+    drawBoard(Board, Xtemp, Ytemp, Xend,Yend).
     
 
-drawBoard(B, X, Y, Xend, Yend) :-
+drawBoard(Board, X, Y, Xend, Yend) :-
 	write('  ----------------------------------'), nl,
 	write(X),
-    drawRow(B, 0,Y, Xend),
+    drawRow(Board, 0,Y, Xend),
     Xtemp is X + 1,
     Ytemp is Y + 1,
-    drawBoard(B, Xtemp, Ytemp, Xend,Yend).
+    drawBoard(Board, Xtemp, Ytemp, Xend,Yend).
 drawRow(_, Xend, _, Xend) :-
     write('|'),nl,!.
-drawRow(B, X, Y, Xend) :-
+drawRow(Board, X, Y, Xend) :-
     Temp is Xend/2,
     X = Temp,
     write('|*'),
 	write('| '),
-	%pos(R,C,Val),
-	%write(Val),
     X1 is X + 1,
     Y1 is Y + 1,
-	drawPosition(B, X1, Y1, D),
+	drawPosition(Board, X1, Y1, D),
 	write(D),
 	Xnext is X + 1,
-    drawRow(B, Xnext,Y,  Xend).
-drawRow(B, X, Y,Xend) :-
+    drawRow(Board, Xnext,Y,  Xend).
+
+drawRow(Board, X, Y,Xend) :-
     write('| '),
     X1 is X + 1,
     Y1 is Y + 1,
-	drawPosition(B, X1, Y1, D),
+	drawPosition(Board, X1, Y1, D),
 	write(D),
 	Xnext is X + 1,
-    drawRow(B, Xnext, Y,Xend).
+    drawRow(Board, Xnext, Y,Xend).
 
 drawWinner(x) :-
 	drawWin,!.
@@ -373,3 +429,40 @@ drawLose :-
 	write('\\ \\____ \\  \\ \\ \\/\\ \\  \\ \\ \\_\\ \\     \\ \\ \\____  \\ \\ \\/\\ \\  \\ \\___  \\  \\ \\  __\\  '),nl,
 	write(' \\/\\_____\\  \\ \\_____\\  \\ \\_____\\     \\ \\_____\\  \\ \\_____\\  \\/\\_____\\  \\ \\_____\\'),nl,
 	write('  \\/_____/   \\/_____/   \\/_____/      \\/_____/   \\/_____/   \\/_____/   \\/_____/'),nl.
+
+
+help :-
+	nl,nl,
+	write('---------------------------------------------------------------------------------------------------------------------------------------------------------------'),nl,
+	write('HELP:'),nl,
+	write('Each turn you need to enter your move in the next format'),nl,
+	write('Column-Row-SubBoard-RotationDirection'),nl,nl,
+	write('Column -> [1-8]'),nl,
+	write('Row -> [1-8]'),nl,
+	write('SubBoard -> [tl,tr,bl,br] - (explanation: tl -> top left, tr -> top right, bl - bottom left, br - bottom right)'),nl,
+	write('RotationDirection - [cw,ccw] - (explanation: cw -> clockwise, ccw -> counter clockwise)'),nl,nl,
+	write('[row, column] is the position of the marble on the board (explanation: row -> from top to bottom, column -> from left to right)'),nl,nl,nl,
+	write('		EXAMPLE:'),nl,
+	write('		play: 3-6-br-cw'),nl,
+	write('				   1   2   3   4     5   6   7   8			     1   2   3   4     5   6   7   8'),nl,
+	write('				  ----------------------------------			    ----------------------------------'),nl,
+	write('				1|   |   |   |   |*|   |   |   |   |			  1|   |   |   |   |*|   |   |   |   |'),nl,
+	write('				  ----------------------------------			    ----------------------------------'),nl,
+	write('				2|   |   |   |   |*|   |   |   |   |			  2|   |   |   |   |*|   |   |   |   |'),nl,
+	write('				  ----------------------------------			    ----------------------------------'),nl,
+	write('				3|   |   |   |   |*|   |   |   |   |			  3|   |   |   |   |*|   |   |   |   |'),nl,
+	write('				  ----------------------------------			    ----------------------------------'),nl,
+	write('			Before ->  4|   |   |   |   |*|   |   |   |   |		   After ->  4|   |   |   |   |*|   |   |   |   |'),nl,
+	write('				  **********************************			    **********************************'),nl,
+	write('				5|   |   |   |   |*|   |   |   |   |			  5|   |   |   |   |*|   |   |   |   |'),nl,
+	write('				  ----------------------------------			    ----------------------------------'),nl,
+	write('				6|   |   |   |   |*|   |   |   |   |			  6|   |   | X |   |*|   |   |   |   |'),nl,
+	write('				  ----------------------------------			    ----------------------------------'),nl,
+	write('				7|   |   |   |   |*|   |   |   |   |			  7|   |   |   |   |*|   |   |   |   |'),nl,
+	write('				  ----------------------------------			    ----------------------------------'),nl,
+	write('				8|   |   |   |   |*|   |   |   | O |			  8|   |   |   |   |*| O |   |   |   |'),nl,
+	write('				  ----------------------------------			    ----------------------------------'),nl,nl,nl,
+	write(		'In each turn you can call -> stop. <- for aborting the game.'),nl,nl,nl,
+	write('---------------------------------------------------------------------------------------------------------------------------------------------------------------'),nl,nl,nl.
+
+
