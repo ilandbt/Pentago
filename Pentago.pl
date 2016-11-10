@@ -1,4 +1,4 @@
-% Programmer: Gil Osher
+% Programmer: Ilan Ben Tal
 % File Name: Pentago.pl
 % Description: Pentago is a two-player abstract strategy game
 %				The game is played on a 8x8 board divided into four 4x4 sub-boards (or quadrants). 
